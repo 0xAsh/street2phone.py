@@ -2,10 +2,16 @@
 
 Automates usage of the [Google Places API](https://developers.google.com/places/web-service/overview) to farm local phone numbers given an address.
 
+## Installation:
+```
+git clone https://github.com/0xAsh/street2phone.py
+pip install -r requirements.txt
+```
+
 ## Usage:
 
 ```
-usage: Street2Phone.py [-h] [-k APIKEY] [-i INPUTFILE] [-o OUTPUTFILE] [-a ADDRESS]
+usage: street2phone.py [-h] [-k APIKEY] [-i INPUTFILE] [-o OUTPUTFILE] [-a ADDRESS]
 
 arguments:
   -h, --help            show this help message and exit
