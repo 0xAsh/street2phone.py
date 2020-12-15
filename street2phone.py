@@ -3,28 +3,32 @@ import sys
 from collections import Counter
 from collections import deque
 import requests
-import xlrd
-from xlutils.copy import copy
 
 ## Parser Documentation
 parser = argparse.ArgumentParser()
 parser.add_argument("-k", "--APIKEY", help="Google API key. For information on how acquire one refer to: https://developers.google.com/maps/documentation/javascript/get-api-key", type=str)
-parser.add_argument("-i", "--inputfile", help="Standardized Excel worksheet used to track location phone numbers. Refer to documentation for formatting guidance.")
-parser.add_argument("-o", "--outputfile", help="Output excel file with appended phone numbers. Specify full path for custom location, otherwise the output file will be written to the current working directory.")
+parser.add_argument("-i", "--inputfile", help="Input file containing a newline separated list of addresses")
+parser.add_argument("-o", "--outputfile", help="Name of output file containing comma-delimmited list addresses and a given phone number")
 parser.add_argument("-a", "--address", help="Address to convert to local phone numbers", type=str)
 args = parser.parse_args()
 
-## Friendly Error Checking
+## Error Checking
 if len(sys.argv) == 1:
-    print('Usage: address2phone.py [-h/--help] --inputfile <file.xls> --outputfile <out.xls> --APIKEY <GOOGLE API KEY>')
+    print('Usage: address2phone.py [-h/--help] --APIKEY/-k <GOOGLE API KEY> --inputfile/-i <file> --outputfile/-o <outfile> --address/-a <Address to Lookup>')
 elif len(sys.argv) != 1:
     if args.APIKEY is None:
         print('Please provide APIKEY via the --APIKEY/-k argument\n')
-    if args.inputfile is None:
-        print('Please provide name of input Excel file via the --inputfile/-i argument')
-        print('If the Excel file is located within a different directory, please specify the full file path\n')
-    if args.outputfile is None:
-        print('Please provide output Excel file name via the --outputfile/-o argument\n')
+        quit()
+    if args.inputfile or args.address is not None:
+        pass
+    else:
+        print(type(args.address))
+        print(type(args.inputfile))
+        print('Please provide an address via or -a or an input file via -i\n')
+        quit()
+    if args.inputfile is not None and args.outputfile is None:
+        print('Please provide output file name via the --outputfile/-o argument\n')
+        quit()
 
 ## Lat/Long Gathering
 def getLatLng(addr):
@@ -34,18 +38,19 @@ def getLatLng(addr):
       lat = longlat.json()['results'][0]['geometry']['location']['lat']
       lng = longlat.json()['results'][0]['geometry']['location']['lng']
       return str(lat) + "," + str(lng)
+   ## Catch errors
    except (IndexError, UnboundLocalError):
          print("No lat long found")
          pass
 
 ## PlaceID Gathering
-def getPlaceIDs():
-   nearbyPayload = {'key': args.APIKEY, 'location': getLatLng(address), 'radius': 150}
+def getPlaceIDs(addr):
+   nearbyPayload = {'key': args.APIKEY, 'location': getLatLng(addr), 'radius': 150}
    nearbyReq = requests.get("https://maps.googleapis.com/maps/api/place/nearbysearch/json?", params=nearbyPayload)
    nearbysearches = nearbyReq.json()['results']
    placeIDList = []
    
-   ## Iterate through JSON and add place_ids to list is not empty
+   ## Iterate through JSON and add place_ids to list if not empty
    for i in nearbysearches:
       if i['place_id'] is not None:
          placeIDList.append(i['place_id'])
@@ -55,7 +60,7 @@ def getPlaceIDs():
 ## Generate a list of nearby phone numbers using the list of place IDs from getPlaceIDs()
 def makePhoneNumberList():
    phoneNumsList = []
-   for i in getPlaceIDs():
+   for i in getPlaceIDs(address):
       placeIDpayload = {'key': args.APIKEY, 'place_id': i, 'fields': "formatted_phone_number"}
       phoneQuery = requests.get('https://maps.googleapis.com/maps/api/place/details/json?', params=placeIDpayload)
       phoneNumbs = phoneQuery.json()['result']
@@ -63,9 +68,9 @@ def makePhoneNumberList():
       
    return phoneNumsList
 
+
 ## Finds the most common first six digits of a phone number from a list of numbers (phoneList)
 ## Returns a phone number within that list that possesses the same first six most common digits
-
 def mostCommon(phoneList):
    tempList = []
    for i in filter(None, phoneList):
@@ -80,25 +85,46 @@ def mostCommon(phoneList):
       pass
 
 
-## Main Function
-excelFile = xlrd.open_workbook(args.inputfile)
-excelSheet = excelFile.sheet_by_index(0)
-excelCopy = copy(excelFile)
-copySheet = excelCopy.get_sheet(0)
+## Main Functions
 
-i = 1 
+if args.address is not None:
+   address = args.address
+   print("Lookup Address: " + address + "\n")
+   ##print(getPlaceIDs(address))
+   print("List of nearby phone numbers: ")
+   tempPhoneList = makePhoneNumberList()
+   print(tempPhoneList)
 
-while i < excelSheet.nrows:
-    address = (str(excelSheet.cell(i, 4).value) + ", " + str(excelSheet.cell(i, 6).value) + ", " + str(excelSheet.cell(i, 7).value) + " " + str(excelSheet.cell(i, 8).value))
-    
-    print(address)
-    print(getPlaceIDs())
-    print(makePhoneNumberList())
-    print(mostCommon(makePhoneNumberList()))
+   print("\nLocal phone number with the most common first six digits: ")
+   print(mostCommon(tempPhoneList))
 
-    copySheet.write(i, 9, mostCommon(makePhoneNumberList()))
-    print(i)
-    print(excelSheet.nrows)
-    i += 1
+if args.inputfile is not None:
+   file = open(args.inputfile, 'r')
+   Lines = file.readlines()
+   
+   ## Setup outfile and headers
+   outFile = open(args.outputfile, "a")
 
-excelCopy.save(args.outputfile)
+   for line in Lines:
+      ## Set address to current line
+      ## This is kinda dumb using a hardcoded variable of address in all the functions but w/e
+      address = line
+      print("Lookup Address: " + address + "\n")
+
+      ## get current list of nearby phone numbs and assign to variable
+      print("List of nearby phone numbers: ")
+      tempPhoneList = makePhoneNumberList()
+      print(tempPhoneList)
+
+      
+      ## Run the mostCommon function on the list variable
+      print("\nLocal phone number with the most common first six digits: ")
+      commonNum = mostCommon(tempPhoneList)
+      print(commonNum)
+
+      ## Append current result to outfile
+      try:
+         outFile.writelines((line + "\t" + commonNum) + "\n")
+      except TypeError:
+         pass
+   outFile.close()
