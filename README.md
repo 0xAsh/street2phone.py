@@ -1,4 +1,4 @@
-![header](street2phone.png)
+![header](street2phone2.png)
 
 Automates usage of the [Google Places API](https://developers.google.com/places/web-service/overview) to farm local phone numbers given an address.
 
