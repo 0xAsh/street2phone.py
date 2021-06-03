@@ -10,7 +10,7 @@ pip install -r requirements.txt
 
 ## Usage:
 
-```
+```python
 usage: street2phone.py [-h] [-k APIKEY] [-i INPUTFILE] [-o OUTPUTFILE] [-a ADDRESS]
 
 arguments:
@@ -26,7 +26,7 @@ arguments:
 ```
 
 ### Example output with a single address:
-```
+```bash
 > python .\Street2Phone.py -k <apikey> -a "1600 Pennsylvania Ave NW, Washington, DC 20500-0003, United States"
 Lookup Address: 1600 Pennsylvania Ave NW, Washington, DC 20500-0003, United States
 
@@ -37,7 +37,7 @@ Local phone number with the most common first six digits:
 (202) 456-1111
 ```
 ### Example output with a list of newline-delimited addresses:
-```
+```bash
 > python .\street2phone.py -k <apikey> -i .\addresses.txt -o phonenumbers.txt
 Lookup Address: 1600 Pennsylvania Ave NW, Washington, DC 20500-0003, United States
 
