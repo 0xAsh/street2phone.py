@@ -1,8 +1,8 @@
-![header](street2phone2.png)
-
 Automates usage of the [Google Places API](https://developers.google.com/places/web-service/overview) to farm local phone numbers given an address.
 
 For more info read the related [blog post](https://0xash.io/2020-12-14-Farming-phone-numbers-with-Python-and-the-Google-Places-API/).
+
+![header](street2phone2.png)
 
 ## Installation:
 ```
